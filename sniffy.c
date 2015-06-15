@@ -79,143 +79,142 @@ struct sniff_tcp {
 
 void processPacket(u_char *arg, const struct pcap_pkthdr* pkthdr, const u_char * packet){ 
 
- int i=0, *counter = (int *)arg; 
-
- /* declare pointers to packet headers */
- const struct sniff_ethernet *ethernet;  /* The ethernet header [1] */
- const struct sniff_ip *ip;              /* The IP header */
- const struct sniff_tcp *tcp;            /* The TCP header */
- const char *payload;                    /* Packet payload */
- int size_ip;
- int size_tcp;
- int size_payload;
- 
- printf("###########################################################\n");
- printf("Packet Count: %d\n", ++(*counter)); 
- printf("Received Packet Size: %d\n", pkthdr->len); 
- printf("Caplen: %u\n", pkthdr->caplen);
- /* define ethernet header */
- ethernet = (struct sniff_ethernet*)(packet);
- 
- /* define/compute ip header offset */
- ip = (struct sniff_ip*)(packet + SIZE_ETHERNET);
- size_ip = IP_HL(ip)*4;
- if (size_ip < 20) {
-         printf("   * Invalid IP header length: %u bytes\n", size_ip);
-         return;
- }
-
- /* print source and destination IP addresses */
- printf("From: %s\n", inet_ntoa(ip->ip_src));
- printf("To: %s\n", inet_ntoa(ip->ip_dst));
-
- /* determine protocol */       
- switch(ip->ip_p) {
-   case IPPROTO_TCP:
-           printf("Protocol: TCP\n");
-           break;
-   case IPPROTO_UDP:
-           printf("Protocol: UDP\n");
-           printf("-----------------------------------------------------------\n\n");
-           return;
-   case IPPROTO_ICMP:
-           printf("Protocol: ICMP\n");
-           printf("-----------------------------------------------------------\n\n");
-           return;
-   case IPPROTO_IP:
-           printf("Protocol: IP\n");
-           printf("-----------------------------------------------------------\n\n");
-           return;
-   default:
-           printf("Protocol: unknown\n");
-           printf("-----------------------------------------------------------\n\n");
-           return;
- }
- 
- /*
-  *  OK, this packet is TCP.
-  */
- 
- /* define/compute tcp header offset */
- tcp = (struct sniff_tcp*)(packet + SIZE_ETHERNET + size_ip);
- size_tcp = TH_OFF(tcp)*4;
- if (size_tcp < 20) {
-         printf("   * Invalid TCP header length: %u bytes\n", size_tcp);
-         return;
- }
- 
- printf("Src port: %d\n", ntohs(tcp->th_sport));
- printf("Dst port: %d\n", ntohs(tcp->th_dport));
-         
-
- //printf("Payload:\n"); 
- //for (i=0; i<pkthdr->len; i++){ 
-
- //   if ( isprint(packet[i]) ) /* If it is a printable character, print it */
- //       printf("%c ", packet[i]); 
- //   else 
- //       printf(". "); 
- //   
- //    if( (i%16 == 0 && i!=0) || i==pkthdr->len-1 ) 
- //       printf("\n"); 
- // } 
- printf("-----------------------------------------------------------\n");
- printf("\n\n"); 
- return; 
+    int i=0, *counter = (int *)arg; 
+  
+    /* declare pointers to packet headers */
+    const struct sniff_ethernet *ethernet;  /* The ethernet header [1] */
+    const struct sniff_ip *ip;              /* The IP header */
+    const struct sniff_tcp *tcp;            /* The TCP header */
+    const char *payload;                    /* Packet payload */
+    int size_ip;
+    int size_tcp;
+    int size_payload;
+    
+    printf("###########################################################\n");
+    printf("Packet Count: %d\n", ++(*counter)); 
+    printf("Received Packet Size: %d\n", pkthdr->len); 
+    printf("Caplen: %u\n", pkthdr->caplen);
+    /* define ethernet header */
+    ethernet = (struct sniff_ethernet*)(packet);
+    
+    /* define/compute ip header offset */
+    ip = (struct sniff_ip*)(packet + SIZE_ETHERNET);
+    size_ip = IP_HL(ip)*4;
+    if (size_ip < 20) {
+            printf("   * Invalid IP header length: %u bytes\n", size_ip);
+            return;
+    }
+  
+    /* print source and destination IP addresses */
+    printf("From: %s\n", inet_ntoa(ip->ip_src));
+    printf("To: %s\n", inet_ntoa(ip->ip_dst));
+  
+    /* determine protocol */       
+    switch(ip->ip_p) {
+      case IPPROTO_TCP:
+              printf("Protocol: TCP\n");
+              break;
+      case IPPROTO_UDP:
+              printf("Protocol: UDP\n");
+              printf("-----------------------------------------------------------\n\n");
+              return;
+      case IPPROTO_ICMP:
+              printf("Protocol: ICMP\n");
+              printf("-----------------------------------------------------------\n\n");
+              return;
+      case IPPROTO_IP:
+              printf("Protocol: IP\n");
+              printf("-----------------------------------------------------------\n\n");
+              return;
+      default:
+              printf("Protocol: unknown\n");
+              printf("-----------------------------------------------------------\n\n");
+              return;
+    }
+    
+    /*
+     *  OK, this packet is TCP.
+     */
+    
+    /* define/compute tcp header offset */
+    tcp = (struct sniff_tcp*)(packet + SIZE_ETHERNET + size_ip);
+    size_tcp = TH_OFF(tcp)*4;
+    if (size_tcp < 20) {
+            printf("   * Invalid TCP header length: %u bytes\n", size_tcp);
+            return;
+    }
+    
+    printf("Src port: %d\n", ntohs(tcp->th_sport));
+    printf("Dst port: %d\n", ntohs(tcp->th_dport));
+            
+  
+    //printf("Payload:\n"); 
+    //for (i=0; i<pkthdr->len; i++){ 
+  
+    //   if ( isprint(packet[i]) ) /* If it is a printable character, print it */
+    //       printf("%c ", packet[i]); 
+    //   else 
+    //       printf(". "); 
+    //   
+    //    if( (i%16 == 0 && i!=0) || i==pkthdr->len-1 ) 
+    //       printf("\n"); 
+    // } 
+    printf("-----------------------------------------------------------\n");
+    printf("\n\n"); 
+    return; 
 } 
 
 
 
 int main(int argc, char *argv[] ){ 
     
- int i=0, count=0; 
- pcap_t *handle = NULL; 
- char errbuf[PCAP_ERRBUF_SIZE];
- char *device=NULL; 
- memset(errbuf,0,PCAP_ERRBUF_SIZE); 
-
- const u_char *packet;
- struct pcap_pkthdr hdr;     /* pcap.h */
-
- if( argc > 1){  /* If user supplied interface name, use it. */
-    device = argv[1];
- }
- else{  /* Get the name of the first device suitable for capture */ 
-    if ( (device = pcap_lookupdev(errbuf)) == NULL){
-        fprintf(stderr, "ERROR: %s\n", errbuf);
-        exit(1);
+    int i=0, count=0; 
+    pcap_t *handle = NULL; 
+    char errbuf[PCAP_ERRBUF_SIZE];
+    char *device=NULL; 
+    memset(errbuf,0,PCAP_ERRBUF_SIZE); 
+  
+    const u_char *packet;
+    struct pcap_pkthdr hdr;     /* pcap.h */
+  
+    if( argc > 1){  /* If user supplied interface name, use it. */
+       device = argv[1];
     }
- }
+    else{  /* Get the name of the first device suitable for capture */ 
+       if ( (device = pcap_lookupdev(errbuf)) == NULL){
+           fprintf(stderr, "ERROR: %s\n", errbuf);
+           exit(1);
+       }
+    }
+  
+    if (pcap_lookupnet(device, &net, &mask, errbuf) == -1) {
+       fprintf(stderr, "Can't get netmask for device %s\n", device);
+       net = 0;
+       mask = 0;
+    }
+  
+    printf("Opening device %s\n", device); 
+    if ( (handle = pcap_open_live(device, MAXBYTES2CAPTURE, 1,  512, errbuf)) == NULL){
+       fprintf(stderr, "ERROR: %s\n", errbuf);
+       exit(1);
+    }
+  
+    if (pcap_compile(handle, &fp, filter_exp, 0, net) == -1) {
+      fprintf(stderr, "Couldn't parse filter %s: %s\n", filter_exp, pcap_geterr(handle));
+      return(2);
+    }
+    if (pcap_setfilter(handle, &fp) == -1) {
+      fprintf(stderr, "Couldn't install filter %s: %s\n", filter_exp, pcap_geterr(handle));
+      return(2);
+    }
+  
+    //packet = pcap_next(handle,&hdr);
+    //printf("PACKET: %d\n", packet);
+  
+    if ( pcap_loop(handle, -1, processPacket, (u_char *)&count) == -1){
+       fprintf(stderr, "ERROR: %s\n", pcap_geterr(handle) );
+       exit(1);
+    }
 
- if (pcap_lookupnet(device, &net, &mask, errbuf) == -1) {
-    fprintf(stderr, "Can't get netmask for device %s\n", device);
-    net = 0;
-    mask = 0;
- }
-
- printf("Opening device %s\n", device); 
- if ( (handle = pcap_open_live(device, MAXBYTES2CAPTURE, 1,  512, errbuf)) == NULL){
-    fprintf(stderr, "ERROR: %s\n", errbuf);
-    exit(1);
- }
-
- if (pcap_compile(handle, &fp, filter_exp, 0, net) == -1) {
-   fprintf(stderr, "Couldn't parse filter %s: %s\n", filter_exp, pcap_geterr(handle));
-   return(2);
- }
- if (pcap_setfilter(handle, &fp) == -1) {
-   fprintf(stderr, "Couldn't install filter %s: %s\n", filter_exp, pcap_geterr(handle));
-   return(2);
- }
-
- //packet = pcap_next(handle,&hdr);
- //printf("PACKET: %d\n", packet);
-
- if ( pcap_loop(handle, -1, processPacket, (u_char *)&count) == -1){
-    fprintf(stderr, "ERROR: %s\n", pcap_geterr(handle) );
-    exit(1);
- }
-
-return 0; 
-
+    return 0; 
 } 
