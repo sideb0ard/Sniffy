@@ -1,5 +1,9 @@
 CC=gcc
 CFLAGS=-lpcap
 
-sniffy: 
+all: 
+	make clean
 	$(CC) -o Sniffy $(CFLAGS) sniffy.c
+
+clean:
+	rm Sniffy
